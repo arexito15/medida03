@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La escalera de las medidas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap">
+<style>
+:root{--bg:#EEF5FB;--ink:#16233B;--card:#fff;--ruler:#FFC93C;--on-ruler:#16233B;--teal:#0B8C7C;--bad:#C93A41;--muted:#4D5B73;--line:#C9D6E6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1A2B;--ink:#EAF1FA;--card:#18273D;--teal:#3CC9B6;--bad:#FF7B80;--muted:#A9B8CE;--line:#2D4060}}
+:root[data-theme="dark"]{--bg:#0F1A2B;--ink:#EAF1FA;--card:#18273D;--teal:#3CC9B6;--bad:#FF7B80;--muted:#A9B8CE;--line:#2D4060}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif;font-size:18px;line-height:1.45}
+main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-size:clamp(28px,6vw,40px);margin:0;line-height:1.1}
+.score{background:var(--ruler);color:var(--on-ruler);font-weight:600;border-radius:999px;padding:6px 16px}
+.lead{color:var(--muted);margin:4px 0 20px}
+section{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px;margin:0 0 20px}
+h2{font-size:24px;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 14px}
+.stair{display:flex;align-items:flex-end;gap:4px;border-bottom:4px solid var(--ink);padding-bottom:0}
+.step{flex:1;min-width:0;height:var(--h);background:var(--ruler);color:var(--on-ruler);border:3px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 2px 4px;position:relative}
+.step::before{content:"";position:absolute;left:6px;right:6px;top:4px;height:8px;background:repeating-linear-gradient(90deg,rgba(22,35,59,.6) 0 2px,transparent 2px 8px)}
+.step.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal)}
+.abbr{font-weight:600;font-size:clamp(17px,4.6vw,24px)}
+.nm{font-size:12px;display:none}
+@media (min-width:600px){.nm{display:block}}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:15px;margin:6px 0 12px}
+.detail{background:var(--bg);border-radius:12px;padding:12px 16px;min-height:130px}
+.detail h3{margin:0 0 4px;font-size:22px}
+.detail p{margin:2px 0}
+.ex{color:var(--teal);font-weight:600}
+.tip{margin-top:12px;border-left:6px solid var(--ruler);padding:4px 12px;font-weight:600}
+.slots{display:flex;gap:6px;margin-bottom:12px}
+.slot{flex:1;height:48px;border:2px dashed var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:600}
+.slot.ok{border:2px solid var(--teal);background:var(--teal);color:#fff}
+.pool{display:flex;flex-wrap:wrap;gap:10px}
+.tile,.opt,.btn{font:inherit;font-weight:600;border-radius:12px;border:2px solid var(--ink);background:var(--ruler);color:var(--on-ruler);padding:10px 18px;cursor:pointer;min-height:48px}
+.tile.used{visibility:hidden}
+.shake{animation:sh .35s}
+@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none;outline:3px solid var(--bad)}}
+.msg{min-height:28px;font-weight:600;margin:12px 0 8px}
+.q{font-size:22px;font-weight:600;margin:0 0 12px}
+.opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.opt{background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.opt small{font-weight:400;font-size:14px}
+.opt.ok{background:var(--teal);color:#fff;border-color:var(--teal)}
+.opt.bad{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.fb{margin:12px 0 0;min-height:48px;color:var(--muted)}
+.big{font-size:24px;font-weight:600}
+.btn{background:var(--teal);color:#fff;border-color:var(--teal)}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+.targets{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.target{border:2px dashed var(--line);border-radius:12px;padding:10px;text-align:center;min-height:84px;display:flex;flex-direction:column;justify-content:center}
+.target b{font-size:22px}
+.target .drop{color:var(--muted);font-size:15px}
+.target.ok{border:2px solid var(--teal);background:var(--teal);color:#fff}
+.target.ok .drop{color:#fff;font-weight:600}
+.target.shake{border-color:var(--bad)}
+.chip{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--ruler);color:var(--on-ruler);border-radius:12px;padding:10px 16px;min-height:48px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;position:relative}
+.chip.drag{z-index:10;cursor:grabbing;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.chip.sel{outline:3px solid var(--teal);outline-offset:2px}
+.errs{font-weight:600;margin:8px 0 0}
+.total{background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:8px}
+.total b{font-size:26px}
+#verdict{font-weight:600}
+#verdict.pass{color:var(--teal)}
+.bar{position:relative;height:12px;background:var(--line);border-radius:6px;margin:8px 0}
+.bar i{display:block;height:100%;width:0;background:var(--teal);border-radius:6px}
+.bar::after{content:"";position:absolute;left:95%;top:-4px;bottom:-4px;width:3px;background:var(--ink)}
+.link{font:inherit;font-size:15px;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:6px 0;margin-bottom:10px}
+
+.slot{min-width:0}
+.slot.nm{font-size:14px}
+.rowbox{margin:0 0 18px}
+.rowlab{font-weight:600;margin:0 0 6px}
+.groups{display:grid;gap:10px;margin-bottom:12px}
+@media (min-width:640px){.groups{grid-template-columns:3fr 1fr 3fr}}
+.grp{border:2px solid var(--line);border-radius:12px;padding:8px}
+.glab{margin:0 0 6px;font-weight:600;color:var(--muted);font-size:15px}
+.grp .slots{margin-bottom:0}
+.slot.shake{border-color:var(--bad)}
+.verdict{font-weight:600}
+.verdict.pass{color:var(--teal)}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.col .slot{flex:none}
+.chip.val{background:var(--card);color:var(--ink)}
+.rule{background:var(--bg);border-left:6px solid var(--ruler);padding:8px 12px;border-radius:8px;margin-bottom:12px}
+.conv{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.conv label{display:flex;flex-direction:column;font-size:15px;color:var(--muted);flex:1;min-width:110px}
+.conv input,.conv select{font:inherit;font-size:18px;padding:8px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.strip{display:flex;gap:4px;margin-bottom:12px}
+.su{flex:1;text-align:center;padding:8px 0;border-radius:8px;background:var(--bg);border:2px solid var(--line);font-weight:600}
+.su.vis{background:var(--ruler);color:var(--on-ruler);border-color:var(--ruler)}
+.su.on{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal)}
+.cstep{background:var(--bg);border-radius:12px;padding:12px 16px;min-height:100px;margin-bottom:12px;font-size:19px}
+.final{margin-top:10px;font-weight:600;color:var(--teal);font-size:22px}
+.fam{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pill{font:inherit;font-weight:600;padding:6px 16px;min-height:40px;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.pill.on{background:var(--ruler);color:var(--on-ruler);border-color:var(--ink)}
+.zone{border:2px dashed var(--line);border-radius:12px;padding:10px;min-height:110px;margin-bottom:12px}
+.zin{display:flex;flex-wrap:wrap;gap:8px}
+.chip.okc{background:var(--teal);color:#fff;border-color:var(--teal);cursor:default}
+.zones{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+@media (min-width:640px){.zones{grid-template-columns:repeat(3,1fr)}}
+.ez{min-height:84px;margin:0;padding:8px}
+.ez .chip,.pool .chip{padding:6px 12px;min-height:40px;font-size:16px}
+.ez .chip{font-size:15px}
+</style>
+</head>
+<body>
+<main>
+<header><h1>La escalera de las medidas</h1><div class="score" aria-live="polite">Estrellas: <span id="stars">0</span></div></header>
+<p class="lead">Para medir longitudes usamos siete unidades. Cada escalón es 10 veces más grande que el anterior.</p>
+
+<section>
+<h2>1. Conoce la escalera</h2>
+<p class="sub">Toca cada escalón para saber qué mide.</p>
+<div class="stair" id="stair"></div>
+<div class="axis"><span>Más pequeña</span><span>Más grande</span></div>
+<div class="detail" id="detail" aria-live="polite"></div>
+<p class="tip">Para subir un escalón, divide entre 10. Para bajar, multiplica por 10.</p>
+</section>
+
+<section>
+<h2>2. Aprende a convertir</h2>
+<p class="sub" id="csub"></p>
+<div class="fam"></div>
+<div class="rule"><b>Bajas</b> un escalón: multiplicas por 10. <b>Subes</b> un escalón: divides entre 10.</div>
+<div class="conv"><label>Número<input id="cn" value="6.5" inputmode="decimal"></label><label>De<select id="cf"></select></label><label>A<select id="ct"></select></label></div>
+<div class="strip" id="strip"></div>
+<div class="cstep" id="cstep" aria-live="polite"></div>
+<button class="btn" id="cnext">Siguiente paso</button>
+</section>
+
+<section>
+<h2>3. Ordena y clasifica</h2>
+<p class="sub">Arrastra cada unidad a su lugar en las tres filas. También puedes tocar la unidad y luego el lugar.</p>
+<div class="total" aria-live="polite"><div>Aprobación total: <b id="pct2">—</b></div><div id="verdict2" class="verdict">Meta: más de 95% y 5 rondas completas</div><div class="bar"><i id="barfill2"></i></div><small id="tdet2"></small></div>
+<button class="link" id="treset2">Borrar historial</button>
+<div id="obox"></div>
+</section>
+
+<section>
+<h2>4. Arrastra cada unidad a su valor</h2>
+<p class="sub">Cada tarjeta dice cuánto mide en metros. Arrastra el nombre que le corresponde. Por ejemplo, 0.001 m es el milímetro.</p>
+<div class="total" aria-live="polite"><div>Aprobación total: <b id="pct">—</b></div><div id="verdict">Meta: más de 95%</div><div class="bar"><i id="barfill"></i></div><small id="tdet"></small></div>
+<button class="link" id="treset">Borrar historial</button>
+<div id="mbox"></div>
+</section>
+<section>
+<h2>5. ¿Cuáles son los múltiplos?</h2>
+<p class="sub">Los múltiplos son más grandes que la unidad principal. Arrastra a la caja solo los múltiplos.</p>
+<div class="fam"></div>
+<div id="sel5"></div>
+</section>
+
+<section>
+<h2>6. ¿Cuáles son los submúltiplos?</h2>
+<p class="sub">Los submúltiplos son más pequeños que la unidad principal. Arrastra a la caja solo los submúltiplos.</p>
+<div class="fam"></div>
+<div id="sel6"></div>
+</section>
+<section>
+<h2>7. ¿Dónde se usa? Medidas de longitud</h2>
+<p class="sub">Arrastra cada ejemplo a la unidad de longitud con la que se mide mejor. También puedes tocar el ejemplo y luego la unidad.</p>
+<div id="ex7"></div>
+</section>
+
+<section>
+<h2>8. ¿Dónde se usa? Medidas de peso (gramos)</h2>
+<p class="sub">Arrastra cada ejemplo a la unidad de peso con la que se mide mejor. También puedes tocar el ejemplo y luego la unidad.</p>
+<div id="ex8"></div>
+</section>
+
+<section>
+<h2>9. ¿Dónde se usa? Medidas de capacidad (litros)</h2>
+<p class="sub">Arrastra cada ejemplo a la unidad de capacidad con la que se mide mejor. También puedes tocar el ejemplo y luego la unidad.</p>
+<div id="ex9"></div>
+</section>
+
+</main>
+
+<script>
+const U=[
+{s:'mm',n:'milímetro',v:'Es la milésima parte de un metro. Es la unidad más pequeña.',rel:'1 mm = 0.001 m',ex:'El grosor de una moneda.'},
+{s:'cm',n:'centímetro',v:'Es la centésima parte de un metro.',rel:'1 cm = 0.01 m',ex:'El ancho de tu uña.'},
+{s:'dm',n:'decímetro',v:'Es la décima parte de un metro.',rel:'1 dm = 0.1 m',ex:'Más o menos el ancho de tu mano.'},
+{s:'m',n:'metro',v:'Es la unidad base de todas las longitudes.',rel:'1 m = 1 m (todas las demás se comparan con ella)',ex:'Una puerta mide cerca de 2 m.'},
+{s:'dam',n:'decámetro',v:'Mide 10 metros.',rel:'1 dam = 10 m',ex:'Un bus largo mide cerca de 1 dam.'},
+{s:'hm',n:'hectómetro',v:'Mide 100 metros.',rel:'1 hm = 100 m',ex:'Una cancha de fútbol mide cerca de 1 hm.'},
+{s:'km',n:'kilómetro',v:'Mide 1000 metros. Es la unidad más grande.',rel:'1 km = 1000 m',ex:'La distancia entre dos ciudades.'}];
+const $=s=>document.querySelector(s);
+let stars=0;
+function star(){stars++;$('#stars').textContent=stars}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* 1. Escalera */
+const stair=$('#stair');
+U.forEach((u,i)=>{const b=document.createElement('button');b.className='step';b.style.setProperty('--h',(84+i*30)+'px');b.setAttribute('aria-label',u.n);b.innerHTML='<span class="abbr">'+u.s+'</span><span class="nm">'+u.n+'</span>';b.onclick=()=>show(i);stair.appendChild(b)});
+function show(i){[...stair.children].forEach((c,k)=>c.classList.toggle('on',k===i));const u=U[i];$('#detail').innerHTML='<h3>'+u.n+' ('+u.s+')</h3><p>'+u.v+'</p><p>'+u.rel+'</p><p class="ex">'+u.ex+'</p>'}
+show(0);
+
+/* 2. Convertir paso a paso */
+const FAM={
+ m:{t:'Metros',s:['mm','cm','dm','m','dam','hm','km'],n:['milímetro','centímetro','decímetro','metro','decámetro','hectómetro','kilómetro']},
+ l:{t:'Litros',s:['ml','cl','dl','l','dal','hl','kl'],n:['mililitro','centilitro','decilitro','litro','decalitro','hectolitro','kilolitro']},
+ g:{t:'Gramos',s:['mg','cg','dg','g','dag','hg','kg'],n:['miligramo','centigramo','decigramo','gramo','decagramo','hectogramo','kilogramo']}};
+let fam='m';
+const fs=i=>FAM[fam].s[i],fn=i=>FAM[fam].n[i];
+function renderFam(){document.querySelectorAll('.fam').forEach(box=>{box.innerHTML='';Object.keys(FAM).forEach(k=>{const b=document.createElement('button');b.className='pill'+(k===fam?' on':'');b.textContent=FAM[k].t;b.setAttribute('aria-pressed',k===fam);b.onclick=()=>setFam(k);box.appendChild(b)})})}
+function setFam(k){fam=k;renderFam();buildConv();cReset();startSel(5);startSel(6)}
+function shift(str,k){
+ const parts=str.split('.'),i=parts[0],f=parts[1]||'';
+ let d=i+f,pos=i.length+k;
+ if(pos<=0){d='0'.repeat(1-pos)+d;pos=1}else if(pos>d.length){d+='0'.repeat(pos-d.length)}
+ let ip=d.slice(0,pos).replace(/^0+(?=\d)/,''),fp=d.slice(pos).replace(/0+$/,'');
+ return fp?ip+'.'+fp:ip}
+const cn=$('#cn'),cf=$('#cf'),ct=$('#ct'),strip=$('#strip');
+function buildConv(){
+ const a=cf.value||3,b=ct.value||1;cf.innerHTML='';ct.innerHTML='';strip.innerHTML='';
+ [6,5,4,3,2,1,0].forEach(i=>{const t=fs(i)+' ('+fn(i)+')';cf.add(new Option(t,i));ct.add(new Option(t,i));const d=document.createElement('div');d.className='su';d.textContent=fs(i);strip.appendChild(d)});
+ cf.value=a;ct.value=b;
+ $('#csub').textContent='Ejemplo: ¿cuántos '+fn(1)+'s son 6.5 '+fs(3)+'? Vamos a bajar por la escalera, paso a paso.'}
+let cs=null;
+function drawC(cur){[...strip.children].forEach((d,p)=>{const i=6-p;d.className='su';if(!cs||cur<0)return;const lo=Math.min(cs.from,cur),hi=Math.max(cs.from,cur);if(i>=lo&&i<=hi)d.classList.add('vis');if(i===cur)d.classList.add('on')})}
+function cReset(){
+ const raw=cn.value.trim().replace(',','.'),from=+cf.value,to=+ct.value;
+ $('#cnext').textContent='Siguiente paso';
+ if(!/^\d+(\.\d+)?$/.test(raw)){cs=null;drawC(-1);$('#cstep').textContent='Escribe un número, por ejemplo 6.5.';$('#cnext').disabled=true;return}
+ const dir=to<from?-1:1,steps=[];let v=raw;
+ for(let i=from;i!==to;i+=dir){const nv=shift(v,dir<0?1:-1);steps.push({a:i,b:i+dir,from:v,to:nv});v=nv}
+ cs={raw:raw,from:from,to:to,steps:steps,n:0,res:v};
+ drawC(from);
+ $('#cnext').disabled=from===to;
+ $('#cstep').innerHTML=from===to?'Es la misma unidad: '+raw+' '+fs(from)+' = '+raw+' '+fs(to)+'.':'Empezamos con <b>'+raw+' '+fs(from)+'</b>. Pulsa «Siguiente paso» para '+(to<from?'bajar':'subir')+' la escalera.'}
+$('#cnext').onclick=()=>{
+ if(!cs)return;
+ if(cs.n>=cs.steps.length){cReset();return}
+ const st=cs.steps[cs.n++],up=st.b>st.a;
+ drawC(st.b);
+ let h='<b>'+fs(st.a)+' → '+fs(st.b)+'</b>: '+(up?'subes un escalón, entonces divides entre 10.':'bajas un escalón, entonces multiplicas por 10.')+'<br>'+st.from+(up?' ÷ 10 = ':' × 10 = ')+'<b>'+st.to+'</b> '+fs(st.b)+'<br><small>El punto se corre un lugar a la '+(up?'izquierda':'derecha')+'.</small>';
+ if(cs.n===cs.steps.length){h+='<div class="final">Respuesta: '+cs.raw+' '+fs(cs.from)+' = '+cs.res+' '+fs(cs.to)+'</div>';$('#cnext').textContent='Probar de nuevo'}
+ $('#cstep').innerHTML=h};
+[cn,cf,ct].forEach(e=>{e.oninput=cReset;e.onchange=cReset});
+renderFam();buildConv();cReset();
+
+/* 3. Ordenar y clasificar */
+const ROWS=[
+ {t:'Fila 1. De la más pequeña a la más grande',ord:[0,1,2,3,4,5,6],ab:true},
+ {t:'Fila 2. De la más grande a la más pequeña',ord:[6,5,4,3,2,1,0],ab:true},
+ {t:'Fila 3. Múltiplos, unidad principal y submúltiplos (arriba el nombre, abajo su valor en metros)',ord:[6,5,4,3,2,1,0],ab:false,groups:[['Múltiplos',0,3],['Unidad principal',3,4],['Submúltiplos',4,7]]}];
+const MV=['0.001','0.01','0.1','1','10','100','1000'];
+let sel2=null,done2=0,err2=0,oOk=0,oErr=0,oR=0,arm2=false,fail2=false,failP2=0;const last2={};
+try{const d=JSON.parse(localStorage.getItem('metrico2')||'{}');oOk=d.o|0;oErr=d.e|0;oR=d.r|0}catch(e){}
+function saveO(){try{localStorage.setItem('metrico2',JSON.stringify({o:oOk,e:oErr,r:oR}))}catch(e){}}
+function renderO(){const n=oOk+oErr,r=n?oOk/n:0,ok=oR>=5&&r>0.95;
+ $('#pct2').textContent=n?(r*100).toFixed(1)+'%':'—';
+ $('#barfill2').style.width=(r*100)+'%';
+ $('#verdict2').textContent=ok?'¡Aprobado!':(oR<5?'Meta: más de 95% y 5 rondas completas':'Meta: más de 95%');
+ $('#verdict2').className=ok?'verdict pass':'verdict';
+ $('#tdet2').textContent=(n?oOk+' aciertos y '+oErr+(oErr===1?' error':' errores')+' en total. ':'Aún no hay intentos. ')+'Rondas completas: '+oR+' (mínimo 5)'}
+function newOrder2(k){let a;do{a=shuffle([0,1,2,3,4,5,6])}while(last2[k]&&a.join()===last2[k]);last2[k]=a.join();return a}
+function pick2(c){if(sel2)sel2.classList.remove('sel');sel2=sel2===c?null:c;if(sel2)c.classList.add('sel')}
+function startOrder(){
+ const played=done2>0||err2>0,prev=err2;done2=0;err2=0;sel2=null;
+ let h='';
+ ROWS.forEach((R,ri)=>{
+  h+='<div class="rowbox"><p class="rowlab">'+R.t+'</p>';
+  const sl=u=>R.groups?'<div class="col"><div class="slot nm" data-r="'+ri+'" data-k="n" data-u="'+u+'" tabindex="0"></div><div class="slot nm val" data-r="'+ri+'" data-k="v" data-u="'+u+'" tabindex="0"></div></div>':'<div class="slot" data-r="'+ri+'" data-k="n" data-u="'+u+'" tabindex="0"></div>';
+  if(R.groups)h+='<div class="groups">'+R.groups.map(g=>'<div class="grp"><p class="glab">'+g[0]+'</p><div class="slots">'+R.ord.slice(g[1],g[2]).map(sl).join('')+'</div></div>').join('')+'</div>';
+  else h+='<div class="slots">'+R.ord.map(sl).join('')+'</div>';
+  h+='<div class="pool" id="pool'+ri+'"></div>'+(R.groups?'<div class="pool" id="pool'+ri+'v"></div>':'')+'</div>';
+ });
+ h+='<p class="errs">Errores en esta ronda: <span id="errs2">0</span></p><p class="msg" id="omsg" aria-live="polite"></p><button class="btn" id="oreset">Empezar de nuevo</button>';
+ $('#obox').innerHTML=h;
+ document.querySelectorAll('#obox .slot').forEach(t=>{t.onclick=()=>{if(sel2)drop2(sel2,t)};t.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&sel2){e.preventDefault();drop2(sel2,t)}}});
+ ROWS.forEach((R,ri)=>{const pool=$('#pool'+ri);newOrder2('p'+ri).forEach(u=>{const c=document.createElement('button');c.className='chip';c.dataset.r=ri;c.dataset.k='n';c.dataset.u=u;c.textContent=R.ab?U[u].s:U[u].n;pool.appendChild(c);drag2(c)});
+  if(R.groups){const pv=$('#pool'+ri+'v');newOrder2('v'+ri).forEach(u=>{const c=document.createElement('button');c.className='chip val';c.dataset.r=ri;c.dataset.k='v';c.dataset.u=u;c.textContent=MV[u]+' m';pv.appendChild(c);drag2(c)})}});
+ $('#omsg').textContent=fail2?'Nuevo intento: completa 5 rondas con más de 95% de aprobación.':played?(prev>0?'Te equivocaste '+prev+(prev>1?' veces':' vez')+'. ¡Esta vez lo harás mejor!':'¡Sin errores! A ver si lo repites.'):'Arrastra cada unidad a su lugar. También puedes tocar la unidad y luego el lugar.';
+ fail2=false;$('#oreset').onclick=startOrder;
+}
+function drag2(c){
+ c.onpointerdown=e=>{
+  e.preventDefault();c.setPointerCapture(e.pointerId);
+  const sx=e.clientX,sy=e.clientY;let moved=false;
+  c.onpointermove=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>8){moved=true;c.classList.add('drag')}if(moved)c.style.transform='translate('+dx+'px,'+dy+'px)'};
+  c.onpointerup=ev=>{
+   c.onpointermove=c.onpointerup=null;c.classList.remove('drag');c.style.transform='';
+   if(moved){c.style.pointerEvents='none';const el=document.elementFromPoint(ev.clientX,ev.clientY);c.style.pointerEvents='';const t=el&&el.closest('#obox .slot');if(t)drop2(c,t)}
+   else pick2(c)};
+ };
+ c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick2(c)}};
+}
+function drop2(c,t){
+ if(t.classList.contains('ok'))return;
+ const msg=$('#omsg'),u=+c.dataset.u,ri=+t.dataset.r;
+ if(c.dataset.r===t.dataset.r&&c.dataset.k===t.dataset.k&&u===+t.dataset.u){
+  oOk++;t.classList.add('ok');t.textContent=t.dataset.k==='v'?MV[u]+' m':(ROWS[ri].ab?U[u].s:U[u].n);c.remove();sel2=null;done2++;star();
+  if(done2===28){oR++;if(oR===5&&oOk/(oOk+oErr)<=0.95){failP2=(oOk/(oOk+oErr)*100).toFixed(1);oOk=0;oErr=0;oR=0;fail2=true}}
+  saveO();renderO();
+  msg.textContent=fail2&&done2===28?'Terminaste las 5 rondas con '+failP2+'% y necesitas más de 95%. Tienes que volver a intentarlo: toca «Empezar de nuevo» y el conteo empieza desde cero.':done2===28&&oR>=5&&oOk/(oOk+oErr)>0.95?'¡APROBADO! Completaste '+oR+' rondas con '+(oOk/(oOk+oErr)*100).toFixed(1)+'% de aprobación.':done2===28?'¡Excelente! Terminaste con '+err2+(err2===1?' error':' errores')+' en esta ronda.':'¡Correcto! '+U[u].n+(t.dataset.k==='v'?' = '+MV[u]+' m.':' ('+U[u].s+').');
+ }else{
+  err2++;oErr++;saveO();renderO();$('#errs2').textContent=err2;
+  [c,t].forEach(x=>{x.classList.add('shake');setTimeout(()=>x.classList.remove('shake'),400)});
+  msg.textContent=c.dataset.r!==t.dataset.r?'Esa unidad es de otra fila. Busca su lugar en esta fila.':c.dataset.k!==t.dataset.k?'El nombre va en el cuadro de arriba y el valor en metros en el de abajo.':ri===2?'Todavía no. Los múltiplos son más grandes que el metro y los submúltiplos son más pequeños.':'Todavía no. Piensa qué lugar le toca en el orden.';
+ }
+}
+$('#treset2').onclick=()=>{const b=$('#treset2');if(!arm2){arm2=true;b.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{arm2=false;b.textContent='Borrar historial'},3000)}else{arm2=false;b.textContent='Borrar historial';oOk=0;oErr=0;oR=0;saveO();renderO()}};
+renderO();startOrder();
+
+/* 3. Arrastrar */
+const VALS=['0.001','0.01','0.1','1','10','100','1000'];
+let sel=null,done=0,errors=0;const last={};
+let tOk=0,tErr=0,tR=0,armed=false,failed=false,failP=0;
+try{const d=JSON.parse(localStorage.getItem('metrico')||'{}');tOk=d.o|0;tErr=d.e|0;tR=d.r|0}catch(e){}
+function saveT(){try{localStorage.setItem('metrico',JSON.stringify({o:tOk,e:tErr,r:tR}))}catch(e){}}
+function renderT(){const n=tOk+tErr,r=n?tOk/n:0,ok=tR>=5&&r>0.95;
+ $('#pct').textContent=n?(r*100).toFixed(1)+'%':'—';
+ $('#barfill').style.width=(r*100)+'%';
+ $('#verdict').textContent=ok?'¡Aprobado!':(tR<5?'Meta: más de 95% y 5 rondas completas':'Meta: más de 95%');
+ $('#verdict').className=ok?'pass':'';
+ $('#tdet').textContent=(n?tOk+' aciertos y '+tErr+(tErr===1?' error':' errores')+' en total. ':'Aún no hay intentos. ')+'Rondas completas: '+tR+' (mínimo 5)'}
+$('#treset').onclick=()=>{const b=$('#treset');if(!armed){armed=true;b.textContent='¿Seguro? Toca otra vez';setTimeout(()=>{armed=false;b.textContent='Borrar historial'},3000)}else{armed=false;b.textContent='Borrar historial';tOk=0;tErr=0;tR=0;saveT();renderT()}};
+renderT();
+function newOrder(k){let a;do{a=shuffle([0,1,2,3,4,5,6])}while(last[k]&&a.join()===last[k]);last[k]=a.join();return a}
+function pickSel(c){if(sel)sel.classList.remove('sel');sel=sel===c?null:c;if(sel)c.classList.add('sel')}
+function startMatch(){
+ const played=done>0||errors>0,prev=errors;done=0;errors=0;sel=null;
+ $('#mbox').innerHTML='<div class="targets" id="targets"></div><div class="pool" id="mpool"></div><p class="errs">Errores: <span id="errs">0</span></p><p class="msg" id="mmsg" aria-live="polite"></p><button class="btn" id="mreset">Empezar de nuevo</button>';
+ const tg=$('#targets'),pool=$('#mpool');
+ newOrder('t').forEach(i=>{const t=document.createElement('div');t.className='target';t.dataset.i=i;t.tabIndex=0;
+  t.innerHTML='<b>'+VALS[i]+' m</b><span class="drop">Suelta aquí</span>';
+  t.onclick=()=>{if(sel)drop(sel,t)};
+  t.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&sel){e.preventDefault();drop(sel,t)}};
+  tg.appendChild(t)});
+ newOrder('c').forEach(i=>{const c=document.createElement('button');c.className='chip';c.dataset.i=i;c.textContent=U[i].n;pool.appendChild(c);drag(c)});
+ $('#mmsg').textContent=failed?'Nuevo intento: completa 5 rondas con más de 95% de aprobación.':played?(prev>0?'Te equivocaste '+prev+(prev>1?' veces':' vez')+'. ¡Esta vez lo harás mejor!':'¡Sin errores! A ver si lo repites.'):'Arrastra un nombre a su tarjeta. También puedes tocar el nombre y luego la tarjeta.';
+ failed=false;$('#mreset').onclick=startMatch;
+}
+function drag(c){
+ c.onpointerdown=e=>{
+  e.preventDefault();c.setPointerCapture(e.pointerId);
+  const sx=e.clientX,sy=e.clientY;let moved=false;
+  c.onpointermove=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>8){moved=true;c.classList.add('drag')}if(moved)c.style.transform='translate('+dx+'px,'+dy+'px)'};
+  c.onpointerup=ev=>{
+   c.onpointermove=c.onpointerup=null;c.classList.remove('drag');c.style.transform='';
+   if(moved){c.style.pointerEvents='none';const el=document.elementFromPoint(ev.clientX,ev.clientY);c.style.pointerEvents='';const t=el&&el.closest('.target');if(t)drop(c,t)}
+   else pickSel(c)};
+ };
+ c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pickSel(c)}};
+}
+function drop(c,t){
+ if(t.classList.contains('ok'))return;
+ const i=+c.dataset.i,msg=$('#mmsg');
+ if(i===+t.dataset.i){
+  tOk++;saveT();renderT();t.classList.add('ok');t.querySelector('.drop').textContent=U[i].n+' ('+U[i].s+')';c.remove();sel=null;done++;star();if(done===7){tR++;if(tR===5&&tOk/(tOk+tErr)<=0.95){failP=(tOk/(tOk+tErr)*100).toFixed(1);tOk=0;tErr=0;tR=0;failed=true}saveT();renderT()}
+  msg.textContent=failed&&done===7?'Terminaste las 5 rondas con '+failP+'% y necesitas más de 95%. Tienes que volver a intentarlo: toca «Empezar de nuevo» y el conteo empieza desde cero.':done===7&&tR>=5&&tOk/(tOk+tErr)>0.95?'¡APROBADO! Completaste '+tR+' rondas con '+(tOk/(tOk+tErr)*100).toFixed(1)+'% de aprobación.':done===7?'¡Excelente! Terminaste con '+errors+(errors===1?' error':' errores')+'. Ya sabes cuánto vale cada unidad en metros.':'¡Correcto! '+U[i].n+' = '+VALS[i]+' m.';
+ }else{
+  errors++;tErr++;saveT();renderT();$('#errs').textContent=errors;[c,t].forEach(x=>{x.classList.add('shake');setTimeout(()=>x.classList.remove('shake'),400)});
+  msg.textContent='Todavía no. ¿Esa unidad es más pequeña o más grande que el metro?';
+ }
+}
+startMatch();
+
+/* 5 y 6. Múltiplos y submúltiplos */
+const SG={5:{ok:[4,5,6],lab:'Múltiplos',sel:null,done:0,err:0},6:{ok:[0,1,2],lab:'Submúltiplos',sel:null,done:0,err:0}};
+const lastS={};
+function pickS(n,c){const g=SG[n];if(g.sel)g.sel.classList.remove('sel');g.sel=g.sel===c?null:c;if(g.sel)c.classList.add('sel')}
+function startSel(n){
+ const g=SG[n],played=g.done>0||g.err>0,prev=g.err;g.done=0;g.err=0;g.sel=null;
+ const box=$('#sel'+n);
+ box.innerHTML='<div class="zone" data-n="'+n+'" tabindex="0"><p class="glab">'+g.lab+'</p><div class="zin"></div></div><div class="pool"></div><p class="errs">Errores: <span class="se">0</span></p><p class="msg" aria-live="polite"></p><button class="btn">Empezar de nuevo</button>';
+ const pool=box.querySelector('.pool'),zone=box.querySelector('.zone');
+ let o;do{o=shuffle([0,1,2,3,4,5,6])}while(lastS[n]&&o.join()===lastS[n]);lastS[n]=o.join();
+ o.forEach(u=>{const c=document.createElement('button');c.className='chip';c.dataset.u=u;c.textContent=fn(u);pool.appendChild(c);dragS(c,n)});
+ zone.onclick=()=>{if(g.sel)dropS(n,g.sel)};
+ zone.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&g.sel){e.preventDefault();dropS(n,g.sel)}};
+ box.querySelector('.msg').textContent=played?(prev>0?'Te equivocaste '+prev+(prev>1?' veces':' vez')+'. ¡Esta vez lo harás mejor!':'¡Sin errores! A ver si lo repites.'):'Arrastra a la caja solo los '+g.lab.toLowerCase()+'. También puedes tocar el nombre y luego la caja.';
+ box.querySelector('.btn').onclick=()=>startSel(n);
+}
+function dragS(c,n){
+ c.onpointerdown=e=>{
+  e.preventDefault();c.setPointerCapture(e.pointerId);
+  const sx=e.clientX,sy=e.clientY;let moved=false;
+  c.onpointermove=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>8){moved=true;c.classList.add('drag')}if(moved)c.style.transform='translate('+dx+'px,'+dy+'px)'};
+  c.onpointerup=ev=>{
+   c.onpointermove=c.onpointerup=null;c.classList.remove('drag');c.style.transform='';
+   if(moved){c.style.pointerEvents='none';const el=document.elementFromPoint(ev.clientX,ev.clientY);c.style.pointerEvents='';const z=el&&el.closest('.zone');if(z&&+z.dataset.n===n)dropS(n,c)}
+   else pickS(n,c)};
+ };
+ c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pickS(n,c)}};
+}
+function dropS(n,c){
+ const g=SG[n],box=$('#sel'+n),msg=box.querySelector('.msg'),u=+c.dataset.u;
+ if(g.ok.includes(u)){
+  c.classList.add('okc');c.classList.remove('sel');c.disabled=true;c.onpointerdown=null;box.querySelector('.zin').appendChild(c);g.sel=null;g.done++;star();
+  msg.textContent=g.done===3?'¡Muy bien! Terminaste con '+g.err+(g.err===1?' error':' errores')+'. '+(n===5?'Los múltiplos son los que valen más que la unidad principal.':'Los submúltiplos son los que valen menos que la unidad principal.'):'¡Correcto! '+fn(u)+' es '+(n===5?'un múltiplo.':'un submúltiplo.');
+ }else{
+  g.err++;box.querySelector('.se').textContent=g.err;c.classList.add('shake');setTimeout(()=>c.classList.remove('shake'),400);
+  msg.textContent=u===3?'El '+fn(3)+' es la unidad principal: no es ni múltiplo ni submúltiplo.':(n===5?'Ese es más pequeño que la unidad principal, es un submúltiplo.':'Ese es más grande que la unidad principal, es un múltiplo.');
+ }
+}
+startSel(5);startSel(6);
+
+/* 7, 8 y 9. ¿Dónde se usa? */
+const EX={
+ 7:[['kilómetro (km)',['carreteras de auto','tiendas']],['hectómetro (hm)',['calles','lotes']],['decámetro (dam)',['casa','edificio','plaza']],['decímetro (dm)',['lápiz','cuaderno']],['centímetro (cm)',['tajador','borrador']],['milímetro (mm)',['grosor de un pelo']]],
+ 8:[['kilogramo (kg)',['azúcar','arroz','carne']],['hectogramo (hg)',['flan','gelatina']],['decagramo (dag)',['levadura','bicarbonato']],['decigramo (dg)',['galleta','mantequilla']],['centigramo (cg)',['joya','oro','plata']],['miligramo (mg)',['tabletas','cápsula de tableta']]],
+ 9:[['kilolitro (kl)',['piscina','tanque de Saguapac']],['hectolitro (hl)',['pozo','tina']],['decalitro (dal)',['balde','garrafa']],['decilitro (dl)',['vaso','botella','suero']],['centilitro (cl)',['lata','perfume']],['mililitro (ml)',['jeringa','ampolla']]]};
+const EG={},lastE={};
+function pickE(n,c){const g=EG[n];if(g.sel)g.sel.classList.remove('sel');g.sel=g.sel===c?null:c;if(g.sel)c.classList.add('sel')}
+function startEx(n){
+ const g=EG[n]||(EG[n]={sel:null,done:0,err:0,total:0}),data=EX[n];
+ const played=g.done>0||g.err>0,prev=g.err;g.done=0;g.err=0;g.sel=null;
+ const box=$('#ex'+n),items=[];
+ data.forEach((r,k)=>r[1].forEach(t=>items.push([k,t])));g.total=items.length;
+ box.innerHTML='<div class="pool"></div><div class="zones">'+data.map((r,k)=>'<div class="zone ez" data-n="'+n+'" data-k="'+k+'" tabindex="0"><p class="glab">'+r[0]+'</p><div class="zin"></div></div>').join('')+'</div><p class="errs">Errores: <span class="se">0</span></p><p class="msg" aria-live="polite"></p><button class="btn">Empezar de nuevo</button>';
+ let o;do{o=shuffle(items.map((x,i)=>i))}while(lastE[n]&&o.join()===lastE[n]);lastE[n]=o.join();
+ const pool=box.querySelector('.pool');
+ o.forEach(i=>{const c=document.createElement('button');c.className='chip';c.dataset.k=items[i][0];c.textContent=items[i][1];pool.appendChild(c);dragE(c,n)});
+ box.querySelectorAll('.zone').forEach(z=>{z.onclick=()=>{if(g.sel)dropE(n,g.sel,z)};z.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&g.sel){e.preventDefault();dropE(n,g.sel,z)}}});
+ box.querySelector('.msg').textContent=played?(prev>0?'Te equivocaste '+prev+(prev>1?' veces':' vez')+'. ¡Esta vez lo harás mejor!':'¡Sin errores! A ver si lo repites.'):'Arrastra cada ejemplo a su unidad.';
+ box.querySelector('.btn').onclick=()=>startEx(n);
+}
+function dragE(c,n){
+ c.onpointerdown=e=>{
+  e.preventDefault();c.setPointerCapture(e.pointerId);
+  const sx=e.clientX,sy=e.clientY;let moved=false;
+  c.onpointermove=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>8){moved=true;c.classList.add('drag')}if(moved)c.style.transform='translate('+dx+'px,'+dy+'px)'};
+  c.onpointerup=ev=>{
+   c.onpointermove=c.onpointerup=null;c.classList.remove('drag');c.style.transform='';
+   if(moved){c.style.pointerEvents='none';const el=document.elementFromPoint(ev.clientX,ev.clientY);c.style.pointerEvents='';const z=el&&el.closest('.ez');if(z&&+z.dataset.n===n)dropE(n,c,z)}
+   else pickE(n,c)};
+ };
+ c.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pickE(n,c)}};
+}
+function dropE(n,c,z){
+ if(c.disabled)return;
+ const g=EG[n],box=$('#ex'+n),msg=box.querySelector('.msg'),k=+c.dataset.k,zk=+z.dataset.k;
+ if(k===zk){
+  c.classList.add('okc');c.classList.remove('sel');c.disabled=true;c.onpointerdown=null;z.querySelector('.zin').appendChild(c);g.sel=null;g.done++;star();
+  msg.textContent=g.done===g.total?'¡Excelente! Terminaste con '+g.err+(g.err===1?' error':' errores')+'.':'¡Correcto! '+c.textContent+' se mide en '+EX[n][k][0].split(' (')[0]+'.';
+ }else{
+  g.err++;box.querySelector('.se').textContent=g.err;
+  [c,z].forEach(x=>{x.classList.add('shake');setTimeout(()=>x.classList.remove('shake'),400)});
+  msg.textContent='Todavía no. '+(k<zk?'Eso es más grande: busca una unidad mayor.':'Eso es más pequeño: busca una unidad menor.');
+ }
+}
+startEx(7);startEx(8);startEx(9);
+</script>
+</body>
+</html>
